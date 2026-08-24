@@ -1,0 +1,30 @@
+# Environments and virtualenvs
+venv/
+.env
+*.env
+
+# Python build and cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Databases and logs
+*.db
+*.log
+backend/placement_scheduler.db
+backend/app.log
+
+# Node dependency directories and production builds
+node_modules/
+dist/
+dist-ssr/
+
+# IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# Stitch tool folders
+.stitch-mcp/
+scratch_stitch/
+stitch_exported/
