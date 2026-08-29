@@ -29,11 +29,24 @@ BRANCHES = ["CSE", "ISE", "ECE", "EEE", "ME", "AI/ML", "Data Science"]
 def seed_database_if_empty():
     db = SessionLocal()
     try:
-        # Check if already seeded
-        if db.query(Company).count() > 0:
+        # Check if already seeded with the updated 45-room configuration
+        if db.query(Room).count() >= 45:
             return  # Already seeded
             
-        print("Database is empty. Auto-seeding realistic placement data (Seed: 42)...")
+        print("Database is empty or outdated. Auto-seeding realistic placement data (45 rooms)...")
+        
+        # Clean up old records in reverse dependency order to prevent foreign key errors
+        db.query(Interview).delete()
+        db.query(ScheduleVersion).delete()
+        db.query(DisruptionEvent).delete()
+        db.query(ScheduleChange).delete()
+        db.query(Notification).delete()
+        db.query(CompanyAvailability).delete()
+        db.query(Room).delete()
+        db.query(Company).delete()
+        db.query(Student).delete()
+        db.commit()
+        
         random.seed(42)
         
         # 1. Rooms
