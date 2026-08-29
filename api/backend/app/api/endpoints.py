@@ -77,12 +77,12 @@ def get_notifications(version_id: Optional[int] = None, db: Session = Depends(ge
 @router.post("/schedule/generate")
 def generate_schedule(db: Session = Depends(get_db)):
     try:
-        # Wipe old schedule versions and interviews
+        # Wipe old schedule versions and interviews in reverse dependency order for PostgreSQL compatibility
+        db.query(ScheduleChange).delete()
+        db.query(DisruptionEvent).delete()
+        db.query(Notification).delete()
         db.query(Interview).delete()
         db.query(ScheduleVersion).delete()
-        db.query(DisruptionEvent).delete()
-        db.query(ScheduleChange).delete()
-        db.query(Notification).delete()
         db.commit()
         
         # Reset student withdrawal states back to false for clean starts
