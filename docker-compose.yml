@@ -2,12 +2,13 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/workspace/backend
+      - ./api/backend/app:/workspace/backend/app
     environment:
       - DATABASE_URL=sqlite:///backend/placement_scheduler.db
 
