@@ -6,13 +6,18 @@ from backend.app.api.endpoints import router as api_router
 from backend.app.utils.seed import seed_database_if_empty
 
 # Set up logging configuration
+import os
+log_handlers = [logging.StreamHandler()]
+if os.getenv("VERCEL") != "1":
+    try:
+        log_handlers.append(logging.FileHandler("backend/app.log"))
+    except Exception:
+        pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("backend/app.log")
-    ]
+    handlers=log_handlers
 )
 logger = logging.getLogger("placement-scheduler")
 
