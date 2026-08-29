@@ -220,19 +220,22 @@ export default function App() {
 
   const fetchMetadata = async () => {
     try {
-      const compRes = await fetch(`${API_URL}/companies`);
+      const [compRes, studRes, roomRes] = await Promise.all([
+        fetch(`${API_URL}/companies`),
+        fetch(`${API_URL}/students`),
+        fetch(`${API_URL}/rooms`)
+      ]);
+
       if (compRes.ok) {
         const compData = await compRes.json();
         if (Array.isArray(compData)) setCompanies(compData);
       }
 
-      const studRes = await fetch(`${API_URL}/students`);
       if (studRes.ok) {
         const studData = await studRes.json();
         if (Array.isArray(studData)) setStudents(studData);
       }
 
-      const roomRes = await fetch(`${API_URL}/rooms`);
       if (roomRes.ok) {
         const roomData = await roomRes.json();
         if (Array.isArray(roomData)) setRooms(roomData);
@@ -265,8 +268,13 @@ export default function App() {
     setLoading(true);
     setApiError(null);
     try {
-      // Fetch interviews
-      const ivRes = await fetch(`${API_URL}/schedule/${vId}`);
+      const [ivRes, metRes, notRes, logRes] = await Promise.all([
+        fetch(`${API_URL}/schedule/${vId}`),
+        fetch(`${API_URL}/metrics?version_id=${vId}`),
+        fetch(`${API_URL}/notifications?version_id=${vId}`),
+        fetch(`${API_URL}/replans`)
+      ]);
+
       if (ivRes.ok) {
         const ivData = await ivRes.json();
         if (Array.isArray(ivData)) {
@@ -279,22 +287,16 @@ export default function App() {
         }
       }
 
-      // Fetch metrics
-      const metRes = await fetch(`${API_URL}/metrics?version_id=${vId}`);
       if (metRes.ok) {
         const metData = await metRes.json();
         if (metData && !metData.detail) setMetrics(metData);
       }
 
-      // Fetch notifications
-      const notRes = await fetch(`${API_URL}/notifications?version_id=${vId}`);
       if (notRes.ok) {
         const notData = await notRes.json();
         if (Array.isArray(notData)) setNotifications(notData);
       }
 
-      // Fetch replan logs
-      const logRes = await fetch(`${API_URL}/replans`);
       if (logRes.ok) {
         const logData = await logRes.json();
         if (Array.isArray(logData)) setReplanLogs(logData);
