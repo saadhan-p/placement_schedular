@@ -21,5 +21,7 @@ services:
     volumes:
       - ./frontend:/workspace
       - /workspace/node_modules
+    environment:
+      - VITE_PROXY_API_TARGET=http://backend:8000
     depends_on:
       - backend
