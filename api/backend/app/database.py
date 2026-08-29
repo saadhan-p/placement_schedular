@@ -13,17 +13,17 @@ if DATABASE_URL.startswith("postgres://"):
 # Safely encode special characters in the database password (common Supabase connection string issue)
 if DATABASE_URL.startswith("postgresql"):
     try:
-        url_obj = urllib.parse.urlparse(DATABASE_URL)
-        if url_obj.password:
-            encoded_password = urllib.parse.quote_plus(url_obj.password)
-            userinfo = f"{url_obj.username}:{encoded_password}"
-            if url_obj.port:
-                netloc = f"{userinfo}@{url_obj.hostname}:{url_obj.port}"
-            else:
-                netloc = f"{userinfo}@{url_obj.hostname}"
-            DATABASE_URL = urllib.parse.urlunparse(
-                url_obj._replace(netloc=netloc)
-            )
+        # Split scheme
+        scheme, rest = DATABASE_URL.split("://", 1)
+        # Split credentials from host using the last '@' symbol
+        if "@" in rest:
+            creds, host_part = rest.rsplit("@", 1)
+            if ":" in creds:
+                username, password = creds.split(":", 1)
+                # Percent-encode the password
+                encoded_password = urllib.parse.quote_plus(password)
+                # Reconstruct the connection string
+                DATABASE_URL = f"{scheme}://{username}:{encoded_password}@{host_part}"
     except Exception as e:
         print(f"Error parsing/encoding DATABASE_URL: {e}")
 
