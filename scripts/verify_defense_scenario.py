@@ -24,6 +24,11 @@ def print_metrics(metrics, version_title):
 
 def main():
     print("Initializing Defense Scenario Simulation...")
+    # Generate tables and seed data if empty
+    Base.metadata.create_all(bind=engine)
+    from backend.app.utils.seed import seed_database_if_empty
+    seed_database_if_empty()
+    
     db = SessionLocal()
     try:
         # Step 1: Initial Schedule

@@ -39,7 +39,7 @@ def seed_database_if_empty():
         # 1. Rooms
         rooms = []
         locations = ["Block A, Floor 1", "Block A, Floor 2", "Block B, Floor 1", "Block B, Floor 2", "Placement Cell"]
-        for i in range(1, 21):
+        for i in range(1, 46):
             rooms.append(Room(
                 id=f"R{i:03d}",
                 name=f"Interview Room {i}",

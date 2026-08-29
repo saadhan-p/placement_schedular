@@ -410,12 +410,9 @@ class ReplanningEngine:
                 end_time=end
             )
 
-    def _find_free_slot(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, constraint: Dict[str, Any]) -> Optional[Tuple[int, int, int, int, str]]:
-        """Find a completely free feasible slot for the student and company."""
-        pref_days = [int(d.strip()) for d in company.preferred_days.split(",") if d.strip().isdigit()] if company.preferred_days else [1, 2, 3, 4]
-        
-        # Scan days and 15-minute slot times
-        for day in pref_days:
+    def _search_free_slot_on_days(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, days: List[int]) -> Optional[Tuple[int, int, int, int, str]]:
+        """Scan specified days for a completely free feasible slot."""
+        for day in days:
             for start in range(540, 1020 - duration + 1, 15):
                 end = start + duration
                 
@@ -438,19 +435,32 @@ class ReplanningEngine:
                         if p_conf:
                             continue
                             
-                        # If we reach here, we found a free slot!
+                        # Found a free slot!
                         return (day, start, end, p, room.id)
         return None
 
-    def _attempt_displacement_reschedule(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, constraint: Dict[str, Any], version_id: int) -> Optional[Tuple[int, int, int, int, str]]:
-        """
-        If no free slot, see if we can move a lower-priority company's interview.
-        We search for a slot where only one panel conflict exists, and that panel conflict
-        is a lower-priority company interview which can itself be moved to a free slot.
-        """
+    def _find_free_slot(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, constraint: Dict[str, Any]) -> Optional[Tuple[int, int, int, int, str]]:
+        """Find a completely free feasible slot for the student and company."""
         pref_days = [int(d.strip()) for d in company.preferred_days.split(",") if d.strip().isdigit()] if company.preferred_days else [1, 2, 3, 4]
         
-        for day in pref_days:
+        # 1. Try preferred days first
+        slot = self._search_free_slot_on_days(checker, student, company, duration, pref_days)
+        if slot:
+            return slot
+            
+        # 2. Fallback: try all other days in placement week (1 to 4)
+        all_days = [1, 2, 3, 4]
+        other_days = [d for d in all_days if d not in pref_days]
+        if other_days:
+            slot = self._search_free_slot_on_days(checker, student, company, duration, other_days)
+            if slot:
+                return slot
+                
+        return None
+
+    def _search_displacement_on_days(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, days: List[int], constraint: Dict[str, Any], version_id: int) -> Optional[Tuple[int, int, int, int, str]]:
+        """Scan specified days to find if we can displace a lower priority interview."""
+        for day in days:
             for start in range(540, 1020 - duration + 1, 15):
                 end = start + duration
                 
@@ -513,6 +523,27 @@ class ReplanningEngine:
                                 else:
                                     # Revert: put target back
                                     checker.add_interview(target_iv.id, target_iv.student_id, target_iv.company_id, target_iv.panel_index, target_iv.room_id, target_iv.day, target_iv.start_time, target_iv.end_time)
+        return None
+
+    def _attempt_displacement_reschedule(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, constraint: Dict[str, Any], version_id: int) -> Optional[Tuple[int, int, int, int, str]]:
+        """
+        If no free slot, see if we can move a lower-priority company's interview.
+        """
+        pref_days = [int(d.strip()) for d in company.preferred_days.split(",") if d.strip().isdigit()] if company.preferred_days else [1, 2, 3, 4]
+        
+        # 1. Try preferred days first
+        slot = self._search_displacement_on_days(checker, student, company, duration, pref_days, constraint, version_id)
+        if slot:
+            return slot
+            
+        # 2. Fallback: try all other days in placement week (1 to 4)
+        all_days = [1, 2, 3, 4]
+        other_days = [d for d in all_days if d not in pref_days]
+        if other_days:
+            slot = self._search_displacement_on_days(checker, student, company, duration, other_days, constraint, version_id)
+            if slot:
+                return slot
+                
         return None
 
     def _diagnose_replan_failure(self, checker: ConstraintChecker, student: Student, company: Company, duration: int, constraint: Dict[str, Any]) -> Tuple[str, str]:

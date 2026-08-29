@@ -133,21 +133,13 @@ class SchedulingEngine:
 
         return scheduled_interviews, unscheduled_interviews
 
-    def _find_best_slot_for_pairing(self, student: Student, company: Company) -> Optional[Tuple[int, int, int, int, str]]:
-        """
-        Evaluate all possible slots and return the best one based on soft constraints.
-        Slot representation: (day, start, end, panel, room)
-        """
+    def _search_slots_on_days(self, student: Student, company: Company, days: List[int]) -> Optional[Tuple[int, int, int, int, str]]:
+        """Search for a feasible slot on the specified list of days."""
         duration = company.interview_duration
         best_score = float('inf')
         best_assignment = None
 
-        # Parse company available days
-        pref_days = [int(d.strip()) for d in company.preferred_days.split(",") if d.strip().isdigit()] if company.preferred_days else [1, 2, 3, 4]
-
-        # Scan working hours: 09:00 (540) to 17:00 (1020)
-        # Scan in 15-minute intervals to match scheduling slots
-        for day in pref_days:
+        for day in days:
             for start_time in range(540, 1020 - duration + 1, 15):
                 end_time = start_time + duration
                 
@@ -175,6 +167,29 @@ class SchedulingEngine:
                             best_assignment = (day, start_time, end_time, panel_idx, room.id)
                             
         return best_assignment
+
+    def _find_best_slot_for_pairing(self, student: Student, company: Company) -> Optional[Tuple[int, int, int, int, str]]:
+        """
+        Evaluate all possible slots and return the best one based on soft constraints.
+        Slot representation: (day, start, end, panel, room)
+        """
+        # Parse company available days
+        pref_days = [int(d.strip()) for d in company.preferred_days.split(",") if d.strip().isdigit()] if company.preferred_days else [1, 2, 3, 4]
+
+        # 1. Try preferred days first
+        slot = self._search_slots_on_days(student, company, pref_days)
+        if slot:
+            return slot
+
+        # 2. Fallback: Try all other days in placement week (1 to 4) if preferred days are full
+        all_days = [1, 2, 3, 4]
+        other_days = [d for d in all_days if d not in pref_days]
+        if other_days:
+            slot = self._search_slots_on_days(student, company, other_days)
+            if slot:
+                return slot
+
+        return None
 
     def _calculate_soft_penalty(self, student: Student, company: Company, day: int, start: int, end: int, room_id: str) -> float:
         """
