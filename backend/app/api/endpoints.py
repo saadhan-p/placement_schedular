@@ -90,11 +90,12 @@ def generate_schedule(db: Session = Depends(get_db)):
         db.commit()
         
         # Add initial version
-        v1 = ScheduleVersion(id=1, name="Initial Schedule", is_active=True)
+        v1 = ScheduleVersion(name="Initial Schedule", is_active=True)
         db.add(v1)
         db.commit()
+        db.refresh(v1)
         
-        results = run_initial_scheduler(db, version_id=1)
+        results = run_initial_scheduler(db, version_id=v1.id)
         return {"status": "success", "results": results}
     except Exception as e:
         db.rollback()

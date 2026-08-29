@@ -159,7 +159,6 @@ def seed_database_if_empty():
 
         # 4. Schedule Version 1
         initial_version = ScheduleVersion(
-            id=1,
             name="Initial Schedule",
             created_at=datetime.utcnow(),
             is_active=True

@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 
 // API base URL
-const API_URL = 'http://localhost:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Time Formatter helper
 const formatTime = (minutes?: number) => {
