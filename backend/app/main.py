@@ -21,16 +21,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger("placement-scheduler")
 
-# Initialize database schema tables on startup
-logger.info("Initializing SQLite Database tables...")
-Base.metadata.create_all(bind=engine)
-seed_database_if_empty()
-
 app = FastAPI(
     title="Placement Week Scheduling & Replanning System API",
     description="REST API for managing placement week schedules, KPIs, conflicts, and minimal-churn disruption replanning.",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+def on_startup():
+    logger.info("Initializing database tables and checking seed data...")
+    Base.metadata.create_all(bind=engine)
+    seed_database_if_empty()
 
 # Set up CORS middleware to allow connection from Vite/React frontend
 app.add_middleware(
