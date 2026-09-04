@@ -33,10 +33,19 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
     seed_database_if_empty()
 
-# Set up CORS middleware to allow connection from Vite/React frontend
+# Set up CORS middleware to allow connections from frontend domains
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "https://placement-beryl.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For dev simplicity, allow all. In production, restrict this.
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
